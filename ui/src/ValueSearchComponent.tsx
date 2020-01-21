@@ -18,6 +18,7 @@ import { PointerScanComponent } from "./PointerScanComponent";
 import { toHex } from "./helper";
 import { FixedSizeList as List } from "react-window";
 import { AutoSizer } from "react-virtualized";
+import { SpinnerComponent } from "./SpinnerComponent";
 
 type SearchComponentState =
   | "IDLE"
@@ -113,7 +114,16 @@ export function ValueSearchComponent() {
     <>
       <ContextMenuTrigger id="searchedAddresses">
         {isLoading ? (
-          <span>lawding dude</span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: ''
+            }}
+          >
+            <SpinnerComponent size={40} />
+          </div>
         ) : (
           <>{renderWindowedList(Array.from(searchedAddresses))}</>
         )}
@@ -183,6 +193,13 @@ export function ValueSearchComponent() {
     setComponentState("SEARCHED_POINTER");
   };
 
+  const onRemoveAddressClick = () => {
+    if (!selectedAddress) return;
+    const newSavedAddresses = new Map(savedAddresses);
+    newSavedAddresses.delete(selectedAddress.address);
+    setSavedAddresses(newSavedAddresses);
+  };
+
   const SearchedAddressesContextMenu = useMemo(
     () => () => (
       <ContextMenu id="searchedAddresses">
@@ -196,9 +213,11 @@ export function ValueSearchComponent() {
     () => () => (
       <ContextMenu id="savedAddresses">
         <MenuItem onClick={onPointerScanClick}>Pointer scan</MenuItem>
+        <MenuItem divider={true} />
+        <MenuItem onClick={onRemoveAddressClick}>Remove</MenuItem>
       </ContextMenu>
     ),
-    [onPointerScanClick]
+    [onPointerScanClick, onRemoveAddressClick]
   );
 
   return (
@@ -246,7 +265,7 @@ export function ValueSearchComponent() {
       <PointerScanComponent
         pointerEntries={searchState.currentPointers}
         shouldPointTo={searchState.currentShouldPointTo}
-        isLoading={componentState === "SEARCHED_POINTER"}
+        isLoading={isPointerScannerLoading}
       />
     </Container>
   );
@@ -308,11 +327,7 @@ const AddressesHeaderItem = styled.div`
 `;
 
 const AddressesContainer = styled(List)`
-  /* display: flex;
-  flex-direction: column;
-  overflow-y: scroll;
-  height: 300px; */
-
+  overflow-y: scroll !important;
   /* width */
   ::-webkit-scrollbar {
     width: 4px;

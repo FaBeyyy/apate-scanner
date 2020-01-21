@@ -164,8 +164,8 @@ std::vector<PointerEntry> getPointers(HANDLE handle, uintptr_t moduleBase, uintp
 								TestWriteFilea("found " + ToHex(addr_min) + " " +  ToHex(x) + " " + ToHex(address - *pointerBase));
 								const auto offset = address - *pointerBase;
 								const auto pointerBaseOffset = (addr_min + x) - moduleBase;
-								auto valuePointer = (ptr_size*)(*pointerBase + offset);
-								foundEntries.push_back({ moduleBase, pointerBaseOffset, {offset}, address, (int)*valuePointer });
+						
+								foundEntries.push_back({ moduleBase, pointerBaseOffset, {offset}, address, 0 });
 							}
 					
 					}

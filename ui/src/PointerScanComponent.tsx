@@ -5,6 +5,7 @@ import { toHex } from "./helper";
 import { Color } from "./Color";
 import { promises } from "fs";
 import "@fortawesome/fontawesome-free/css/all.css";
+import { SpinnerComponent } from "./SpinnerComponent";
 const { dialog } = require("electron").remote;
 const fs = promises;
 
@@ -14,7 +15,11 @@ interface Props {
   isLoading: boolean;
 }
 
-export function PointerScanComponent({ pointerEntries, shouldPointTo, isLoading }: Props) {
+export function PointerScanComponent({
+  pointerEntries,
+  shouldPointTo,
+  isLoading
+}: Props) {
   const onSavePointersClick = () => {
     dialog
       .showSaveDialog({ filters: [{ name: "JSON", extensions: ["json"] }] })
@@ -41,6 +46,7 @@ export function PointerScanComponent({ pointerEntries, shouldPointTo, isLoading 
           .then(res => {
             const readFileObject = JSON.parse(res.toString());
             if (readFileObject.pointerEntries && readFileObject.shouldPointTo) {
+              // TODO
             }
           })
           .catch(err => alert(err));
@@ -48,7 +54,19 @@ export function PointerScanComponent({ pointerEntries, shouldPointTo, isLoading 
   };
 
   const renderPointerEntries = () => {
-    if (isLoading) return <span>lawding dude</span>
+    if (isLoading)
+      return (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: ""
+          }}
+        >
+          <SpinnerComponent size={40} />
+        </div>
+      );
     return pointerEntries.map((entries, i) => (
       <ListItemContainer>
         <AddressItem>{toHex(entries.baseAddress)}</AddressItem>
@@ -74,7 +92,9 @@ export function PointerScanComponent({ pointerEntries, shouldPointTo, isLoading 
             {`pointer${pointerEntries.length > 1 ? "s" : ""}`} for{" "}
             {toHex(shouldPointTo)}
           </div>
-        ) : <div>{" "}</div>}
+        ) : (
+          <div> </div>
+        )}
 
         <div>
           <IconButtonContainer onClick={onImportPointersClick}>
