@@ -9,16 +9,20 @@ export type SearchSendAction =
   | {
       type: "SEARCH_POINTERS";
       payload: {
-        pointers: PointerEntry[];
+        pointerEntries: PointerEntry[];
         shouldPointTo: number;
       };
     }
   | {
-      type: "IMPORT_POINTERS";
+      type: "UPDATE_POINTERS";
       payload: {
-        pointers: PointerEntry[];
+        pointerEntries: PointerEntry[];
         shouldPointTo: number;
       };
+    }
+  | {
+      type: "UPDATE_SHOULDPOINT";
+      payload: number;
     };
 
 export function searchInitialValue(
@@ -51,6 +55,18 @@ export function searchPointers(
   const messageObj = {
     type: "SEARCH_POINTERS",
     payload: address
+  };
+
+  sendMessage(JSON.stringify(messageObj));
+}
+
+export function updatePointers(
+  pointers: PointerEntry[],
+  sendMessage: (message: string) => boolean
+) {
+  const messageObj = {
+    type: "UPDATE_POINTERS",
+    payload: pointers
   };
 
   sendMessage(JSON.stringify(messageObj));

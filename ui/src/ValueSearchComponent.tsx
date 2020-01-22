@@ -1,6 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import styled, { css } from "styled-components";
-import { useSearchState, useSendMessage, MemoryEntry } from "./PipeContext";
+import {
+  useSearchState,
+  useSendMessage,
+  MemoryEntry,
+  useDispatch
+} from "./PipeContext";
 import {
   searchInitialValue,
   searchNextValue,
@@ -46,6 +51,7 @@ export function ValueSearchComponent() {
   const searchState = useSearchState();
 
   const sendMessage = useSendMessage();
+  const dispatch = useDispatch();
 
   const isLoading = useMemo(() => {
     if (
@@ -119,7 +125,7 @@ export function ValueSearchComponent() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              marginTop: ''
+              marginTop: ""
             }}
           >
             <SpinnerComponent size={40} />
@@ -189,6 +195,10 @@ export function ValueSearchComponent() {
 
   const onPointerScanClick = () => {
     if (!selectedAddress) return;
+    dispatch({
+      type: "UPDATE_SHOULDPOINT",
+      payload: selectedAddress.address
+    });
     searchPointers(selectedAddress.address, sendMessage);
     setComponentState("SEARCHED_POINTER");
   };

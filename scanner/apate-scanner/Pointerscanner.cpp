@@ -216,9 +216,9 @@ std::vector<PointerEntry> Pointerscanner::updatePointers(std::vector<PointerEntr
 {
 	std::vector<PointerEntry> updatedEntries = {};
 	for (auto entry : entries) {
-		auto base = this->memory->read<int>(entry.baseAddress + entry.baseOffset);
+		auto base = this->memory->read<uintptr_t>((uintptr_t)module->baseModuleRaw + entry.baseOffset);
 		auto value = this->memory->read<int>(base + entry.offsets[0]);
-		updatedEntries.push_back({entry.baseAddress, entry.baseOffset, entry.offsets, base + entry.offsets[0], value });
+		updatedEntries.push_back({ (uintptr_t)module->baseModuleRaw, entry.baseOffset, entry.offsets, base + entry.offsets[0], value });
 	}
 	return updatedEntries;
 }

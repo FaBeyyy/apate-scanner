@@ -92,14 +92,14 @@ void main() {
 
 						if (type == "SEARCH_POINTERS") {
 							pointers = pointerscanner->searchStaticPointers(payload);
-							returnData["payload"]["pointers"] = pointers;
+							returnData["payload"]["pointerEntries"] = pointers;
 							returnData["payload"]["shouldPointTo"] = payload;
 						}
 
 						if (type == "UPDATE_POINTERS") {
 							pointers = pointerscanner->updatePointers(payload);
-							returnData["payload"]["pointers"] = pointers;
-							returnData["payload"]["shouldPointTo"] = payload;
+							returnData["payload"]["pointerEntries"] = pointers;
+							returnData["payload"]["shouldPointTo"] = 0;
 						}
 
 						pipe->writePipe(returnData.dump());

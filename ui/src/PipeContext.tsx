@@ -19,6 +19,7 @@ interface PipeContext {
   lastMessage: PipeData | null;
   searchState: SearchState;
   serverState: ServerState;
+  dispatch: React.Dispatch<SearchSendAction>;
 }
 
 export const useLatestMessage = () => {
@@ -31,6 +32,10 @@ export const useSendMessage = () => {
 
 export const useSearchState = () => {
   return useContext(Context).searchState;
+};
+
+export const useDispatch = () => {
+  return useContext(Context).dispatch;
 };
 
 const Context = createContext({} as PipeContext);
@@ -104,7 +109,8 @@ export function Pipe(props: any) {
         sendMessage: sendMessage,
         lastMessage: message,
         searchState: searchState,
-        serverState: serverState
+        serverState: serverState,
+        dispatch: dispatch
       }}
     >
       {props.children}

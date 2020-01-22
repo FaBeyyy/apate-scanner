@@ -68,14 +68,21 @@ export const searchReducer = (
     case "SEARCH_POINTERS":
       return {
         ...state,
-        currentPointers: action.payload.pointers,
+        currentPointers: action.payload.pointerEntries,
         currentShouldPointTo: action.payload.shouldPointTo
       };
-    case "IMPORT_POINTERS":
+
+    case "UPDATE_POINTERS":
       return {
         ...state,
-        currentPointers: action.payload.pointers,
+        currentPointers: action.payload.pointerEntries,
         currentShouldPointTo: action.payload.shouldPointTo
+      };
+
+    case "UPDATE_SHOULDPOINT":
+      return {
+        ...state,
+        currentShouldPointTo: action.payload
       };
 
     default:

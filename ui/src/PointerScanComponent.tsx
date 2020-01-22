@@ -1,11 +1,12 @@
 import styled from "styled-components";
-import { PointerEntry } from "./PipeContext";
+import { PointerEntry, useDispatch, useSendMessage } from "./PipeContext";
 import React from "react";
 import { toHex } from "./helper";
 import { Color } from "./Color";
 import { promises } from "fs";
 import "@fortawesome/fontawesome-free/css/all.css";
 import { SpinnerComponent } from "./SpinnerComponent";
+import { updatePointers } from "./ValueSearchActionCreators";
 const { dialog } = require("electron").remote;
 const fs = promises;
 
@@ -20,6 +21,14 @@ export function PointerScanComponent({
   shouldPointTo,
   isLoading
 }: Props) {
+  const dispatch = useDispatch();
+  const sendMessage = useSendMessage();
+
+  const onUpdatePointersClick = () => {
+    if (pointerEntries.length < 1) return;
+    updatePointers(pointerEntries, sendMessage);
+  }
+
   const onSavePointersClick = () => {
     dialog
       .showSaveDialog({ filters: [{ name: "JSON", extensions: ["json"] }] })
@@ -45,8 +54,8 @@ export function PointerScanComponent({
         fs.readFile(res.filePaths[0])
           .then(res => {
             const readFileObject = JSON.parse(res.toString());
-            if (readFileObject.pointerEntries && readFileObject.shouldPointTo) {
-              // TODO
+            if (readFileObject.pointerEntries && readFileObject.shouldPointTo !== undefined) {
+              dispatch({ type: "UPDATE_POINTERS", payload: readFileObject });
             }
           })
           .catch(err => alert(err));
@@ -103,6 +112,9 @@ export function PointerScanComponent({
           <IconButtonContainer onClick={onSavePointersClick}>
             <i className="fas fa-upload"></i>
           </IconButtonContainer>
+          <IconButtonContainer onClick={onUpdatePointersClick}>
+            <i className="fas fa-sync-alt"></i>
+          </IconButtonContainer>
         </div>
       </div>
       <ListItemContainer style={{ marginTop: "5px" }}>
@@ -142,7 +154,7 @@ const HeaderSeperator = styled.div`
 const IconButtonContainer = styled.div`
   cursor: pointer;
   display: inline-flex;
-  :last-of-type {
+  :not(:first-of-type) {
     margin-left: 10px;
   }
 `;
