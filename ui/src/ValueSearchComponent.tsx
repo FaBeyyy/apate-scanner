@@ -9,7 +9,9 @@ import {
 import {
   searchInitialValue,
   searchNextValue,
-  searchPointers
+  searchPointers,
+  ValueSearchDataType,
+  ValueSearchCompareType
 } from "./ValueSearchActionCreators";
 import { Color } from "./Color";
 import {
@@ -34,6 +36,10 @@ type SearchComponentState =
 
 export function ValueSearchComponent() {
   const [value, setValue] = useState<number | undefined>(undefined);
+  const [dataType, setDataType] = useState<ValueSearchDataType>("INT");
+  const [compareType, setCompareType] = useState<ValueSearchCompareType>(
+    "EQUALS"
+  );
   const [selectedAddress, setSelectedAddress] = useState<
     MemoryEntry | undefined
   >(undefined);
@@ -59,11 +65,6 @@ export function ValueSearchComponent() {
       componentState === "SEARCHED_NEXT"
     )
       return true;
-    return false;
-  }, [componentState]);
-
-  const isPointerScannerLoading = useMemo(() => {
-    if (componentState === "SEARCHED_POINTER") return true;
     return false;
   }, [componentState]);
 
@@ -95,13 +96,23 @@ export function ValueSearchComponent() {
 
   const onSearchValueClick = () => {
     if (value == null) return;
-    searchInitialValue(value, sendMessage);
+    const payload = {
+      value: value,
+      compareType: compareType,
+      dataType: dataType
+    };
+    dispatch(searchInitialValue(payload, sendMessage));
     setComponentState("SEARCHED_INITAL");
   };
 
   const onSearchNextValueClick = () => {
     if (value == null) return;
-    searchNextValue(value, sendMessage);
+    const payload = {
+      value: value,
+      compareType: compareType,
+      dataType: dataType
+    };
+    dispatch(searchNextValue(payload, sendMessage));
     setComponentState("SEARCHED_NEXT");
   };
 
@@ -199,7 +210,7 @@ export function ValueSearchComponent() {
       type: "UPDATE_SHOULDPOINT",
       payload: selectedAddress.address
     });
-    searchPointers(selectedAddress.address, sendMessage);
+    dispatch(searchPointers(selectedAddress.address, sendMessage));
     setComponentState("SEARCHED_POINTER");
   };
 
@@ -230,52 +241,107 @@ export function ValueSearchComponent() {
     [onPointerScanClick, onRemoveAddressClick]
   );
 
+  const onValueSearchDataTypeChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const value = event.target.value as ValueSearchDataType;
+    setDataType(value);
+  };
+
+  const onValueSearchCompareTypeChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const value = event.target.value as ValueSearchCompareType;
+    setCompareType(value);
+  };
+
   return (
     <Container>
-      <ContainerAddresses>
-        <InnerContainer>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <SearchValueButton onClick={onSearchValueClick}>
-              First scan
-            </SearchValueButton>
+      <ContentContainer>
+        <div style={{ display: "flex", flexDirection: "row" }}>
+          <SearchValueButton onClick={onSearchValueClick}>
+            First scan
+          </SearchValueButton>
 
-            <ValueInput type="number" value={value} onChange={onValueChange} />
+          <ValueInput type="number" value={value} onChange={onValueChange} />
 
-            <SearchValueButton onClick={onSearchNextValueClick}>
-              Next scan
-            </SearchValueButton>
+          <SearchValueButton onClick={onSearchNextValueClick}>
+            Next scan
+          </SearchValueButton>
+
+          <SelectInput onChange={onValueSearchDataTypeChange}>
+            <SelectOption value={"INT" } selected={dataType === "INT"}>
+              int
+            </SelectOption>
+            <SelectOption
+              value={"FLOAT" }
+              selected={dataType === "FLOAT"}
+            >
+              float
+            </SelectOption>
+            <SelectOption
+              value={"BOOL" }
+              selected={dataType === "BOOL"}
+            >
+              bool
+            </SelectOption>
+          </SelectInput>
+          <SelectInput onChange={onValueSearchCompareTypeChange}>
+            <SelectOption
+              value={"EQUALS" }
+              selected={compareType === "EQUALS"}
+            >
+              Equals
+            </SelectOption>
+            <SelectOption
+              value={"INCREASED" }
+              selected={compareType === "INCREASED"}
+            >
+              Increased
+            </SelectOption>
+            <SelectOption
+              value={"DECREASED" }
+              selected={compareType === "DECREASED"}
+            >
+              Decreased
+            </SelectOption>
+          </SelectInput>
+        </div>
+
+        <div style={{ padding: "5px" }}>
+          <div>
+            Found:{" "}
+            {value !== undefined && componentState !== "IDLE"
+              ? searchState.currentAddresses.length
+              : ""}
           </div>
+        </div>
 
-          <div style={{ padding: "5px" }}>
-            <div>
-              Found:{" "}
-              {value !== undefined && componentState !== "IDLE"
-                ? searchState.currentAddresses.length
-                : ""}
-            </div>
-          </div>
+        <ContainerAddresses>
+          <InnerContainer>
+            <AddressesHeader>
+              <AddressesHeaderItem>Address</AddressesHeaderItem>
+              <AddressesHeaderItem>Value</AddressesHeaderItem>
+            </AddressesHeader>
+            <HeaderSeperator></HeaderSeperator>
+            {renderSearchState()}
+          </InnerContainer>
 
-          <AddressesHeader>
-            <AddressesHeaderItem>Address</AddressesHeaderItem>
-            <AddressesHeaderItem>Value</AddressesHeaderItem>
-          </AddressesHeader>
-          <HeaderSeperator></HeaderSeperator>
-          {renderSearchState()}
-        </InnerContainer>
-        <ColSeperator></ColSeperator>
-        <InnerContainer>
-          <AddressesHeader style={{ marginTop: "59px" }}>
-            <AddressesHeaderItem>Address</AddressesHeaderItem>
-            <AddressesHeaderItem>Value</AddressesHeaderItem>
-          </AddressesHeader>
-          <HeaderSeperator></HeaderSeperator>
-          {renderSavedState()}
-        </InnerContainer>
-      </ContainerAddresses>
+          <ColSeperator></ColSeperator>
+          <InnerContainer>
+            <AddressesHeader>
+              <AddressesHeaderItem>Address</AddressesHeaderItem>
+              <AddressesHeaderItem>Value</AddressesHeaderItem>
+            </AddressesHeader>
+            <HeaderSeperator></HeaderSeperator>
+            {renderSavedState()}
+          </InnerContainer>
+        </ContainerAddresses>
+      </ContentContainer>
       <PointerScanComponent
         pointerEntries={searchState.currentPointers}
         shouldPointTo={searchState.currentShouldPointTo}
-        isLoading={isPointerScannerLoading}
+        isLoading={searchState.loading.pointers}
       />
     </Container>
   );
@@ -283,11 +349,14 @@ export function ValueSearchComponent() {
 
 const Container = styled.div``;
 
-const ContainerAddresses = styled.div`
-  padding: 10px;
-  display: flex;
+const ContentContainer = styled.div`
   background: ${Color.secondaryBackground};
   border-radius: 5px;
+  padding: 10px;
+`;
+
+const ContainerAddresses = styled.div`
+  display: flex;
 `;
 
 const InnerContainer = styled.div`
@@ -411,7 +480,24 @@ const HeaderSeperator = styled.div`
 const ColSeperator = styled.div`
   width: 1px;
   background: rgba(255, 255, 255, 0.2);
-  margin-top: 59px;
+
   margin-right: 5px;
   margin-left: 5px;
 `;
+
+const SelectInput = styled.select`
+  background: ${Color.fourthBackground};
+  height: 30px;
+  box-sizing: border-box;
+  padding: 5px;
+  border-radius: 2px;
+  color: #fff;
+  border: 2px solid transparent;
+  margin-left: 5px;
+  :focus {
+    outline: 0px !important;
+  }
+  outline: 0px !important;
+`;
+
+const SelectOption = styled.option``;

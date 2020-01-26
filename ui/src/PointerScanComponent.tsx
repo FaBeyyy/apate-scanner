@@ -1,12 +1,12 @@
 import styled from "styled-components";
 import { PointerEntry, useDispatch, useSendMessage } from "./PipeContext";
-import React from "react";
+import React, { useState } from "react";
 import { toHex } from "./helper";
 import { Color } from "./Color";
 import { promises } from "fs";
 import "@fortawesome/fontawesome-free/css/all.css";
 import { SpinnerComponent } from "./SpinnerComponent";
-import { updatePointers } from "./ValueSearchActionCreators";
+import { updatePointers, searchPointers } from "./ValueSearchActionCreators";
 const { dialog } = require("electron").remote;
 const fs = promises;
 
@@ -23,11 +23,12 @@ export function PointerScanComponent({
 }: Props) {
   const dispatch = useDispatch();
   const sendMessage = useSendMessage();
+  const [addressInput, setAddressInput] = useState<number | null>(null);
 
   const onUpdatePointersClick = () => {
     if (pointerEntries.length < 1) return;
-    updatePointers(pointerEntries, sendMessage);
-  }
+    dispatch(updatePointers(pointerEntries, sendMessage));
+  };
 
   const onSavePointersClick = () => {
     dialog
@@ -54,12 +55,27 @@ export function PointerScanComponent({
         fs.readFile(res.filePaths[0])
           .then(res => {
             const readFileObject = JSON.parse(res.toString());
-            if (readFileObject.pointerEntries && readFileObject.shouldPointTo !== undefined) {
+            if (
+              readFileObject.pointerEntries &&
+              readFileObject.shouldPointTo !== undefined
+            ) {
               dispatch({ type: "UPDATE_POINTERS", payload: readFileObject });
             }
           })
           .catch(err => alert(err));
       });
+  };
+
+  const onSearchAddressClick = () => {
+    if (!addressInput) return;
+    dispatch(searchPointers(addressInput, sendMessage));
+  };
+
+  const onAddressInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    const valueNum = Number(value);
+    if (isNaN(valueNum) || !valueNum) return;
+    setAddressInput(valueNum);
   };
 
   const renderPointerEntries = () => {
@@ -104,8 +120,14 @@ export function PointerScanComponent({
         ) : (
           <div> </div>
         )}
+        <div>
+          <input type="text" onChange={onAddressInputChange} />
+        </div>
 
         <div>
+          <IconButtonContainer onClick={onSearchAddressClick}>
+            <i className="fas fa-search"></i>
+          </IconButtonContainer>
           <IconButtonContainer onClick={onImportPointersClick}>
             <i className="fas fa-download"></i>
           </IconButtonContainer>

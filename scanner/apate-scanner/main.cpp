@@ -40,7 +40,6 @@ void main() {
 	try {
 		TestWriteFile("0");
 		std::string processName = "ModernWarfare.exe";
-		//std::string processName = "iw4mp.exe";
 		auto memory = std::make_shared<EasyMem>();
 		bool isRunning = ProcessHelper::isRunning(processName); //dt vector pls fix
 		TestWriteFile("1");
