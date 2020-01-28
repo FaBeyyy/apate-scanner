@@ -39,6 +39,12 @@
     <ClCompile Include="EasyMem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PointerScannerHelperFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Enum.hpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PipeClient.h">
@@ -62,10 +68,13 @@
     <ClInclude Include="Module.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Pointerscanner.h">
+    <ClInclude Include="json.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="json.hpp">
+    <ClInclude Include="PointerScannerHelperFunctions.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Pointerscanner.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

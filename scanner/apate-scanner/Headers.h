@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Windows.h>
-#include <Psapi.h>
+
 #include <ntstatus.h>
 #include <cstdint>
 #include <functional>

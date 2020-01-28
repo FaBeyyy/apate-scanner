@@ -1,4 +1,5 @@
 #include "Headers.h"
+#include <Psapi.h>
 
 NTSTATUS enumerate_handles(ENUM_HANDLE_CALLBACK callback)
 {

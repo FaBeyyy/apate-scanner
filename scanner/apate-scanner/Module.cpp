@@ -2,6 +2,7 @@
 #include "Enumeration.h"
 #include <fstream>
 #include <string>
+#include <Psapi.h>
 
 Module::Module(HANDLE hProcess, std::string moduleName) {
 	HMODULE hMods[1024];

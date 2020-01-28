@@ -117,6 +117,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,6 +133,8 @@
     <ClCompile Include="Module.cpp" />
     <ClCompile Include="PipeClient.cpp" />
     <ClCompile Include="Pointerscanner.cpp" />
+    <ClCompile Include="PointerScannerHelperFunctions.cpp" />
+    <ClCompile Include="Enum.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EasyMem.hpp" />
@@ -143,6 +146,7 @@
     <ClInclude Include="Module.h" />
     <ClInclude Include="PipeClient.h" />
     <ClInclude Include="Pointerscanner.h" />
+    <ClInclude Include="PointerScannerHelperFunctions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

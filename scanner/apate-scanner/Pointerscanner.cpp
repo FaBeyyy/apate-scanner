@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include <windows.h>
-#include <psapi.h>
+
 #include <memory>
 #include <fstream>
 #include <sstream>
@@ -37,13 +37,54 @@ void TestWriteFilea(std::string a)
 	}
 }
 
-auto scanMemory(HANDLE handle, int value) {
+template <class T>
+T compareValues(T a, T b, CompareType compareType, DataType dataType) {
+	auto compareTypeString = magic_enum::enum_name(compareType);
+	auto dataTypeString = magic_enum::enum_name(dataType);
+
+	if (compareTypeString == magic_enum::enum_name(CompareType::EQUALS)) {
+		if (dataTypeString ==  magic_enum::enum_name(DataType::FLOAT_TYPE)) {
+			return round(a) == round(b);
+		}
+		if (dataTypeString == magic_enum::enum_name(DataType::INT_TYPE)) {
+			return a == b;
+		}
+		if (dataTypeString == magic_enum::enum_name(DataType::BOOL_TYPE)) {
+			return a == b;
+		}
+	}
+	if (compareTypeString == magic_enum::enum_name(CompareType::INCREASED)) {
+		if (dataTypeString == magic_enum::enum_name(DataType::FLOAT_TYPE)) {
+			return round(a) > round(b);
+		}
+		if (dataTypeString == magic_enum::enum_name(DataType::INT_TYPE)) {
+			return a > b;
+		}
+		if (dataTypeString == magic_enum::enum_name(DataType::BOOL_TYPE)) {
+			return a != b;
+		}
+	}
+	if (compareTypeString == magic_enum::enum_name(CompareType::DECREASED)) {
+		if (dataTypeString == magic_enum::enum_name(DataType::FLOAT_TYPE)) {
+			return round(a) < round(b);
+		}
+		if (dataTypeString == magic_enum::enum_name(DataType::INT_TYPE)) {
+			return a < b;
+		}
+		if (dataTypeString == magic_enum::enum_name(DataType::BOOL_TYPE)) {
+			return a != b;
+		}
+	}
+}
+
+template <class T>
+auto scanMemory(HANDLE handle, T value, CompareType compareType) {
 
 	auto addr_min = start;
 	auto addr_max = end;
 
 	auto found = 0;
-	std::vector<MemoryEntry> foundEntries = {};
+	std::vector<MemoryEntry<T>> foundEntries = {};
 	
 
 	// Loop the pages of memory of the application..
@@ -99,7 +140,8 @@ auto scanMemory(HANDLE handle, int value) {
 	return foundEntries;
 }
 
-std::vector<PointerEntry> getPointers(HANDLE handle, uintptr_t moduleBase, uintptr_t address) {
+template <class T>
+std::vector<PointerEntry<T>> getPointers(HANDLE handle, uintptr_t moduleBase, uintptr_t address) {
 	TestWriteFilea("moduleBase: " + ToHex(moduleBase));
 	auto addr_min = start;
 	auto addr_max = end;
@@ -181,40 +223,49 @@ std::vector<PointerEntry> getPointers(HANDLE handle, uintptr_t moduleBase, uintp
 	return foundEntries;
 }
 
-Pointerscanner::Pointerscanner(std::shared_ptr<EasyMem> memory, std::shared_ptr<PipeClient> pipeClient, std::shared_ptr<Module> module)
+template <class T>
+Pointerscanner<T>::Pointerscanner(std::shared_ptr<EasyMem> memory, std::shared_ptr<PipeClient> pipeClient, std::shared_ptr<Module> module, DataType dataType)
 {
 	this->memory = memory;
 	this->pipeClient = pipeClient;
 	this->module = module;
+	this->currentDataType = dataType;
 }
 
-std::vector<MemoryEntry> Pointerscanner::searchInitialValue(int value) { 
-	this->currentEntries = scanMemory(memory->getProcessHandle(), value);
+template <typename T>
+std::vector<MemoryEntry<T>> Pointerscanner<T>::searchInitialValue(ValueSearchPayloadTyped<T> payload) {
+	this->currentEntries = scanMemory<T>(memory->getProcessHandle(), payload);
+
 	return this->currentEntries;
 }
-std::vector<MemoryEntry> Pointerscanner::searchNextValue(int nextValue) {
-	std::vector<MemoryEntry> foundEntries = {};
+
+template <typename T>
+std::vector<MemoryEntry<T>> Pointerscanner<T>::searchNextValue(ValueSearchPayloadTyped<T> payload) {
+	std::vector<MemoryEntry<T>> foundEntries = {};
+	auto nextValue = payload.value;
 	for (auto entry : this->currentEntries) {
-		const auto foundValue = memory->read<int>(entry.address);
-		if (foundValue == nextValue) foundEntries.push_back({ entry.address, 4, nextValue });
+		const auto foundValue = memory->read<T>(entry.address);
+		if (compareValues(nextValue, foundValue, payload.compareType, payload.dataType)) foundEntries.push_back({ entry.address, 4, nextValue });
 	}
 	this->currentEntries = foundEntries;
 	return foundEntries;
 }
 
-std::vector<MemoryEntry> Pointerscanner::updateCurrentEntries()
+template <typename T>
+std::vector<MemoryEntry<T>> Pointerscanner<T>::updateCurrentEntries()
 {
-	std::vector<MemoryEntry> updatedEntries = {};
+	std::vector<MemoryEntry<T>> updatedEntries = {};
 	for (auto entry : this->currentEntries) {
-		auto value = this->memory->read<int>(entry.address);
+		auto value = this->memory->read<T>(entry.address);
 		updatedEntries.push_back({ entry.address, 4, value });
 	}
 	return updatedEntries;
 }
 
-std::vector<PointerEntry> Pointerscanner::updatePointers(std::vector<PointerEntry> entries)
+template <typename T>
+std::vector<PointerEntry<T>> Pointerscanner<T>::updatePointers(std::vector<PointerEntry<T>> entries)
 {
-	std::vector<PointerEntry> updatedEntries = {};
+	std::vector<PointerEntry<T>> updatedEntries = {};
 	for (auto entry : entries) {
 		auto base = this->memory->read<uintptr_t>((uintptr_t)module->baseModuleRaw + entry.baseOffset);
 		auto value = this->memory->read<int>(base + entry.offsets[0]);
@@ -223,7 +274,8 @@ std::vector<PointerEntry> Pointerscanner::updatePointers(std::vector<PointerEntr
 	return updatedEntries;
 }
 
-
-std::vector<PointerEntry> Pointerscanner::searchStaticPointers(uintptr_t address) {
-	return getPointers(memory->getProcessHandle(), (uintptr_t)module->baseModuleRaw, address);
+template <typename T>
+std::vector<PointerEntry<T>> Pointerscanner<T>::searchStaticPointers(uintptr_t address) {
+	return getPointers<T>(memory->getProcessHandle(), (uintptr_t)module->baseModuleRaw, address);
 }
+

@@ -36,7 +36,7 @@ type SearchComponentState =
 
 export function ValueSearchComponent() {
   const [value, setValue] = useState<number | undefined>(undefined);
-  const [dataType, setDataType] = useState<ValueSearchDataType>("INT");
+  const [dataType, setDataType] = useState<ValueSearchDataType>("INT_TYPE");
   const [compareType, setCompareType] = useState<ValueSearchCompareType>(
     "EQUALS"
   );
@@ -270,18 +270,18 @@ export function ValueSearchComponent() {
           </SearchValueButton>
 
           <SelectInput onChange={onValueSearchDataTypeChange}>
-            <SelectOption value={"INT" } selected={dataType === "INT"}>
+            <SelectOption value={"INT_TYPE" } selected={dataType === "INT_TYPE"}>
               int
             </SelectOption>
             <SelectOption
-              value={"FLOAT" }
-              selected={dataType === "FLOAT"}
+              value={"FLOAT_TYPE" }
+              selected={dataType === "FLOAT_TYPE"}
             >
               float
             </SelectOption>
             <SelectOption
-              value={"BOOL" }
-              selected={dataType === "BOOL"}
+              value={"BOOL_TYPE" }
+              selected={dataType === "BOOL_TYPE"}
             >
               bool
             </SelectOption>

@@ -1,6 +1,6 @@
 import { MemoryEntry, PointerEntry } from "./PipeContext";
 
-export type ValueSearchDataType = "INT" | "FLOAT" | "BOOL";
+export type ValueSearchDataType = "INT_TYPE" | "FLOAT_TYPE" | "BOOL_TYPE";
 export type ValueSearchCompareType = "EQUALS" | "DECREASED" | "INCREASED";
 export interface ValueSearchSendPayload {
   value: number;

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <Psapi.h>
 
 HANDLE get_handle_to_process(LPWSTR process)
 {

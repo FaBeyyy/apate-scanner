@@ -4,7 +4,7 @@
 
 #include <windows.h>	//Windows-functions (OpenProcess, RPM, WPM, etc)
 #include <tlhelp32.h>	//Functions that gather process-information
-#include <Psapi.h>		//Functions that gather module-information
+
 #include <map>			//Data-container that saves parsed modules 
 #include <string>		//String/WString implementation
 #include <cctype>		//tolower-function that converts a char to lowercase
