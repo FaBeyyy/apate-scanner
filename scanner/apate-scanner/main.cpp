@@ -6,7 +6,7 @@
 #include "PipeClient.h"
 #include "json.hpp"
 #include "Enum.hpp"
-#include "PointerScannerHelperFunctions.h"
+#include "PointerScannerHelperFunctions.hpp"
 
 using json = nlohmann::json;
 using namespace PointerScannerHelperFunctions;
@@ -27,11 +27,34 @@ void from_json(const json& j, PointerEntry<T>& p) {
 	j.at("pointsTo").get_to(p.pointsTo);
 	j.at("value").get_to(p.value);
 }
+
+void TestWriteFilet(int a)
+{
+	std::ofstream myfile("test1337.txt", std::ios::out | std::ios::app);
+	if (myfile.is_open())
+	{
+		myfile << std::to_string(a) << std::endl;
+	}
+}
+
+template <typename Enumeration>
+auto as_integer(Enumeration const value)
+-> typename std::underlying_type<Enumeration>::type
+{
+	return static_cast<typename std::underlying_type<Enumeration>::type>(value);
+}
+
 template <class T>
 void from_json(const json& j, ValueSearchPayloadTyped<T>& p) {
+	auto dataType = j.at("dataType").get<std::string>();
+	auto compareType = j.at("compareType").get<std::string>();
+	auto dataTypeEnumContainer = magic_enum::enum_cast<DataType>(dataType);
+	auto compareTypeEnumContainer = magic_enum::enum_cast<CompareType>(compareType);
+	auto dataTypeEnumNumber = dataTypeEnumContainer.value();
+	auto compareTypeEnumNumber = compareTypeEnumContainer.value();
+	p.dataType = dataTypeEnumNumber;
+	p.compareType = compareTypeEnumNumber;
 	j.at("value").get_to(p.value);
-	j.at("dataType").get_to(p.dataType);
-	j.at("compareType").get_to(p.compareType);
 }
 
 
@@ -46,14 +69,15 @@ void TestWriteFile(std::string a)
 
 
 
+
 void main() {
 	try {
 		TestWriteFile("0");
-		std::string processName = "ModernWarfare.exe";
+		std::string processName = "iw4mp.exe";
 		auto memory = std::make_shared<EasyMem>();
 		bool isRunning = ProcessHelper::isRunning(processName); //dt vector pls fix
 		TestWriteFile("1");
-		Sleep(60000);
+		//Sleep(60000);
 		auto handle = getHandle(processName.c_str());
 		TestWriteFile("2" + std::to_string((int)handle));
 		if (!handle || handle == nullptr || handle == INVALID_HANDLE_VALUE) throw std::exception();
@@ -85,12 +109,14 @@ void main() {
 						
 						auto returnData = json();
 						returnData["type"] = pipeData["type"];
-						
+
 
 						if (type == "SEARCH_INITIAL_VALUE" || type == "SEARCH_NEXT_VALUE") {
 							auto searchPayloadString = payload;
 							std::string dataTypeString = payload["dataType"];
 							if (dataTypeString == magic_enum::enum_name(DataType::INT_TYPE)) {
+								ValueSearchPayloadTyped<int> searchPayloadTyped = payload;
+							
 								returnData["payload"] = getAddressesFromScanType<int>(type, pointerscannerInt, payload);
 							}
 							else if (dataTypeString == magic_enum::enum_name(DataType::FLOAT_TYPE)) {

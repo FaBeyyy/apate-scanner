@@ -36,6 +36,7 @@ type SearchComponentState =
 
 export function ValueSearchComponent() {
   const [value, setValue] = useState<number | undefined>(undefined);
+  const [stringValue, setStringValue] = useState<string | undefined>(undefined);
   const [dataType, setDataType] = useState<ValueSearchDataType>("INT_TYPE");
   const [compareType, setCompareType] = useState<ValueSearchCompareType>(
     "EQUALS"
@@ -60,13 +61,8 @@ export function ValueSearchComponent() {
   const dispatch = useDispatch();
 
   const isLoading = useMemo(() => {
-    if (
-      componentState === "SEARCHED_INITAL" ||
-      componentState === "SEARCHED_NEXT"
-    )
-      return true;
-    return false;
-  }, [componentState]);
+    return searchState.loading.addresses;
+  }, [searchState.loading.addresses]);
 
   useEffect(() => {
     const newSearchedAddresses = new Map(
@@ -90,12 +86,19 @@ export function ValueSearchComponent() {
   }, [searchState.currentAddresses, searchState.currentPointers]);
 
   const onValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.value == "") setValue(undefined);
-    else setValue(Number(event.target.value));
+    setStringValue(event.target.value);
+    const numberValue = Number(event.target.value);
+    if (!isNaN(numberValue)) setValue(numberValue)
+    else setValue(undefined);
   };
 
   const onSearchValueClick = () => {
-    if (value == null) return;
+    if (
+      value == null ||
+      compareType === "DECREASED" ||
+      compareType === "INCREASED"
+    )
+      return;
     const payload = {
       value: value,
       compareType: compareType,
@@ -259,48 +262,50 @@ export function ValueSearchComponent() {
     <Container>
       <ContentContainer>
         <div style={{ display: "flex", flexDirection: "row" }}>
-          <SearchValueButton onClick={onSearchValueClick}>
+          <SearchValueButton
+            onClick={onSearchValueClick}
+            disabled={
+              compareType === "DECREASED" || compareType === "INCREASED"
+            }
+          >
             First scan
           </SearchValueButton>
 
-          <ValueInput type="number" value={value} onChange={onValueChange} />
+          <ValueInput type="text" value={stringValue} onChange={onValueChange} />
 
           <SearchValueButton onClick={onSearchNextValueClick}>
             Next scan
           </SearchValueButton>
 
           <SelectInput onChange={onValueSearchDataTypeChange}>
-            <SelectOption value={"INT_TYPE" } selected={dataType === "INT_TYPE"}>
+            <SelectOption value={"INT_TYPE"} selected={dataType === "INT_TYPE"}>
               int
             </SelectOption>
             <SelectOption
-              value={"FLOAT_TYPE" }
+              value={"FLOAT_TYPE"}
               selected={dataType === "FLOAT_TYPE"}
             >
               float
             </SelectOption>
             <SelectOption
-              value={"BOOL_TYPE" }
+              value={"BOOL_TYPE"}
               selected={dataType === "BOOL_TYPE"}
             >
               bool
             </SelectOption>
           </SelectInput>
           <SelectInput onChange={onValueSearchCompareTypeChange}>
-            <SelectOption
-              value={"EQUALS" }
-              selected={compareType === "EQUALS"}
-            >
+            <SelectOption value={"EQUALS"} selected={compareType === "EQUALS"}>
               Equals
             </SelectOption>
             <SelectOption
-              value={"INCREASED" }
+              value={"INCREASED"}
               selected={compareType === "INCREASED"}
             >
               Increased
             </SelectOption>
             <SelectOption
-              value={"DECREASED" }
+              value={"DECREASED"}
               selected={compareType === "DECREASED"}
             >
               Decreased
@@ -311,7 +316,7 @@ export function ValueSearchComponent() {
         <div style={{ padding: "5px" }}>
           <div>
             Found:{" "}
-            {value !== undefined && componentState !== "IDLE"
+            {value !== undefined && !isLoading && componentState === "UPDATED"
               ? searchState.currentAddresses.length
               : ""}
           </div>
@@ -445,7 +450,7 @@ const AddressContainer = styled.div<{ selected: boolean }>`
       : ""};
   padding-left: 5px;
 `;
-const SearchValueButton = styled.button`
+const SearchValueButton = styled.button<{disabled?: boolean}>`
   background: ${Color.fifthBackground};
   border: 2px solid transparent;
   box-sizing: border-box;
@@ -456,7 +461,7 @@ const SearchValueButton = styled.button`
   padding: 5px;
   padding-left: 10px;
   padding-right: 10px;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? 'not-allowed': 'pointer'};
   :last-of-type {
     border-top-left-radius: 0px;
     border-bottom-left-radius: 0px;

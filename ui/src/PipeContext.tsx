@@ -71,7 +71,7 @@ export function Pipe(props: any) {
   const sendMessage = (message: string) => {
     if (!pipeStream || serverState !== "CONNECTED") return false;
     const nullterm = message + "\0";
-    pipeStream.write(nullterm, (err => console.log(err + ' sent')));
+    pipeStream.write(nullterm, (err => console.log(err + ' sent ', message)));
     return true;
   };
 

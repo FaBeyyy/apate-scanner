@@ -39,9 +39,6 @@
     <ClCompile Include="EasyMem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PointerScannerHelperFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Enum.hpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,10 +68,10 @@
     <ClInclude Include="json.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="PointerScannerHelperFunctions.h">
+    <ClInclude Include="PointerScannerHelperFunctions.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Pointerscanner.h">
+    <ClInclude Include="Pointerscanner.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
