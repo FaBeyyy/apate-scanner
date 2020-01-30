@@ -1,5 +1,5 @@
 import { MemoryEntry, PointerEntry } from "./PipeContext";
-import { SearchSendAction } from "./ValueSearchActionCreators";
+import { SearchRecieveAction } from "./ValueSearchActionCreators";
 
 export interface SearchState {
   currentAddresses: MemoryEntry[];
@@ -60,7 +60,7 @@ export const initalSearchState: SearchState = {
 
 export const searchReducer = (
   state: SearchState,
-  action: SearchSendAction
+  action: SearchRecieveAction
 ): SearchState => {
   switch (action.type) {
     case "SEARCH_INITIAL_VALUE":

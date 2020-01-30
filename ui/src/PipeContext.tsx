@@ -12,14 +12,14 @@ import {
   initalSearchState,
   SearchState
 } from "./ValueSearchReducer";
-import { SearchSendAction } from "./ValueSearchActionCreators";
+import { SearchRecieveAction, SearchSendAction } from "./ValueSearchActionCreators";
 
 interface PipeContext {
-  sendMessage: (message: string) => boolean;
+  sendMessage: (message: PipeSendData) => boolean;
   lastMessage: PipeData | null;
   searchState: SearchState;
   serverState: ServerState;
-  dispatch: React.Dispatch<SearchSendAction>;
+  dispatch: React.Dispatch<SearchRecieveAction>;
 }
 
 export const useLatestMessage = () => {
@@ -42,8 +42,8 @@ const Context = createContext({} as PipeContext);
 
 type ServerState = "CONNECTED" | "DISCONNECTED" | "IDLE";
 
-export type PipeData = SearchSendAction;
-
+export type PipeData = SearchRecieveAction;
+export type PipeSendData = SearchSendAction;
 export interface MemoryEntry {
   address: number;
   sizeInBytes: number;
@@ -68,9 +68,9 @@ export function Pipe(props: any) {
   const [message, setMessage] = useState<PipeData | null>(null);
   const [searchState, dispatch] = useReducer(searchReducer, initalSearchState);
 
-  const sendMessage = (message: string) => {
+  const sendMessage = (message: PipeSendData) => {
     if (!pipeStream || serverState !== "CONNECTED") return false;
-    const nullterm = message + "\0";
+    const nullterm = JSON.stringify(message) + "\0";
     pipeStream.write(nullterm, (err => console.log(err + ' sent ', message)));
     return true;
   };

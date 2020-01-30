@@ -11,9 +11,32 @@ export interface ValueSearchSendPayload {
 export type SearchSendAction =
   | {
       type: "SEARCH_INITIAL_VALUE";
+      payload: ValueSearchSendPayload;
+    }
+  | {
+      type: "SEARCH_NEXT_VALUE";
+      payload: ValueSearchSendPayload;
+    }
+  | {
+      type: "UPDATE_ADDRESSES";
+      payload: ValueSearchSendPayload;
+    }
+  | {
+      type: "UPDATE_POINTERS";
+      payload: PointerEntry[];
+    }
+  | {
+      type: "SEARCH_POINTERS";
+      payload: number;
+    };
+
+export type SearchRecieveAction =
+  | {
+      type: "SEARCH_INITIAL_VALUE";
       payload: MemoryEntry[];
     }
   | { type: "SEARCH_NEXT_VALUE"; payload: MemoryEntry[] }
+  | { type: "UPDATE_ADDRESSES"; payload: MemoryEntry[] }
   | {
       type: "SEARCH_POINTERS";
       payload: {
@@ -41,14 +64,14 @@ export type SearchSendAction =
 
 export function searchInitialValue(
   payload: ValueSearchSendPayload,
-  sendMessage: (message: string) => boolean
-): SearchSendAction {
+  sendMessage: (message: SearchSendAction) => boolean
+): SearchRecieveAction {
   const messageObj = {
-    type: "SEARCH_INITIAL_VALUE",
+    type: "SEARCH_INITIAL_VALUE" as const,
     payload: payload
   };
 
-  sendMessage(JSON.stringify(messageObj));
+  sendMessage(messageObj);
 
   return {
     type: "UPDATE_LOADING_ADDRESSES"
@@ -57,14 +80,13 @@ export function searchInitialValue(
 
 export function searchNextValue(
   payload: ValueSearchSendPayload,
-
-  sendMessage: (message: string) => boolean
-): SearchSendAction {
+  sendMessage: (message: SearchSendAction) => boolean
+): SearchRecieveAction {
   const messageObj = {
-    type: "SEARCH_NEXT_VALUE",
+    type: "SEARCH_NEXT_VALUE" as const,
     payload: payload
   };
-  sendMessage(JSON.stringify(messageObj));
+  sendMessage(messageObj);
 
   return {
     type: "UPDATE_LOADING_ADDRESSES"
@@ -73,14 +95,14 @@ export function searchNextValue(
 
 export function searchPointers(
   address: number,
-  sendMessage: (message: string) => boolean
-): SearchSendAction {
+  sendMessage: (message: SearchSendAction) => boolean
+): SearchRecieveAction {
   const messageObj = {
-    type: "SEARCH_POINTERS",
+    type: "SEARCH_POINTERS" as const,
     payload: address
   };
 
-  sendMessage(JSON.stringify(messageObj));
+  sendMessage(messageObj);
   return {
     type: "UPDATE_LOADING_POINTERS"
   };
@@ -88,14 +110,14 @@ export function searchPointers(
 
 export function updatePointers(
   pointers: PointerEntry[],
-  sendMessage: (message: string) => boolean
-): SearchSendAction {
+  sendMessage: (message: SearchSendAction) => boolean
+): SearchRecieveAction {
   const messageObj = {
-    type: "UPDATE_POINTERS",
+    type: "UPDATE_POINTERS" as const,
     payload: pointers
   };
 
-  sendMessage(JSON.stringify(messageObj));
+  sendMessage(messageObj);
   return {
     type: "UPDATE_LOADING_POINTERS"
   };

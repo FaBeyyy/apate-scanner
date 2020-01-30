@@ -82,6 +82,14 @@ export function ValueSearchComponent() {
   }, [searchState.currentAddresses]);
 
   useEffect(() => {
+    setInterval(() => {
+      if (searchedAddresses.size > 0 || savedAddresses.size > 0) {
+        
+      }
+    }, [100]);
+  }, [])
+
+  useEffect(() => {
     setComponentState("UPDATED");
   }, [searchState.currentAddresses, searchState.currentPointers]);
 
