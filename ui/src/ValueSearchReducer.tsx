@@ -81,6 +81,15 @@ export const searchReducer = (
           addresses: false
         }
       };
+    case "UPDATE_ADDRESSES":
+      return {
+        ...state,
+        currentAddresses: action.payload,
+        loading: {
+          ...state.loading,
+          addresses: false
+        }
+      };
     case "SEARCH_POINTERS":
       return {
         ...state,

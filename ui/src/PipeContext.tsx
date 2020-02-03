@@ -12,7 +12,7 @@ import {
   initalSearchState,
   SearchState
 } from "./ValueSearchReducer";
-import { SearchRecieveAction, SearchSendAction } from "./ValueSearchActionCreators";
+import { SearchRecieveAction, SearchSendAction, ValueSearchDataType } from "./ValueSearchActionCreators";
 
 interface PipeContext {
   sendMessage: (message: PipeSendData) => boolean;
@@ -46,7 +46,7 @@ export type PipeData = SearchRecieveAction;
 export type PipeSendData = SearchSendAction;
 export interface MemoryEntry {
   address: number;
-  sizeInBytes: number;
+  dataType: ValueSearchDataType;
   value: number;
 }
 

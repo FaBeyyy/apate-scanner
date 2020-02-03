@@ -19,7 +19,7 @@ export type SearchSendAction =
     }
   | {
       type: "UPDATE_ADDRESSES";
-      payload: ValueSearchSendPayload;
+      payload: MemoryEntry[];
     }
   | {
       type: "UPDATE_POINTERS";
@@ -91,6 +91,18 @@ export function searchNextValue(
   return {
     type: "UPDATE_LOADING_ADDRESSES"
   };
+}
+
+export function updateAddresses(
+  payload: MemoryEntry[],
+  sendMessage: (message: SearchSendAction) => boolean
+) {
+  const messageObj = {
+    type: "UPDATE_ADDRESSES" as const,
+    payload: payload
+  };
+  sendMessage(messageObj);
+
 }
 
 export function searchPointers(

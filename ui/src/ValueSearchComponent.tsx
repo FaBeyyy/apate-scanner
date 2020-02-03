@@ -11,7 +11,8 @@ import {
   searchNextValue,
   searchPointers,
   ValueSearchDataType,
-  ValueSearchCompareType
+  ValueSearchCompareType,
+  updateAddresses
 } from "./ValueSearchActionCreators";
 import { Color } from "./Color";
 import {
@@ -22,7 +23,7 @@ import {
 } from "react-contextmenu";
 import "./contextMenu.css";
 import { PointerScanComponent } from "./PointerScanComponent";
-import { toHex } from "./helper";
+import { toHex, useInterval } from "./helper";
 import { FixedSizeList as List } from "react-window";
 import { AutoSizer } from "react-virtualized";
 import { SpinnerComponent } from "./SpinnerComponent";
@@ -64,30 +65,46 @@ export function ValueSearchComponent() {
     return searchState.loading.addresses;
   }, [searchState.loading.addresses]);
 
+  const isPointerLoading = useMemo(() => {
+    return searchState.loading.pointers;
+  }, [searchState.loading.pointers]);
+
   useEffect(() => {
-    const newSearchedAddresses = new Map(
+    const newAddresses = new Map(
       searchState.currentAddresses.map(entry => [entry.address, entry])
     );
-    if (searchedAddresses.size === 0 || componentState === "SEARCHED_NEXT") {
-      setSearchedAddresses(newSearchedAddresses);
+    if (savedAddresses.size === 0) {
+      setSearchedAddresses(newAddresses);
     } else {
-      newSearchedAddresses.forEach((value, key, map) => {
+      newAddresses.forEach((value, key, map) => {
         if (savedAddresses.has(key)) {
           savedAddresses.set(key, value);
-          map.delete(key);
+        }
+        if (searchedAddresses.has(key)) {
+          searchedAddresses.set(key, value);
         }
       });
-      setSearchedAddresses(newSearchedAddresses);
+      searchedAddresses.forEach((value, key, map) => {
+        if (!newAddresses.has(key)) {
+          searchedAddresses.delete(key);
+        }
+      });
+      setSavedAddresses(new Map(savedAddresses));
+      setSearchedAddresses(new Map(searchedAddresses));
     }
   }, [searchState.currentAddresses]);
 
-  useEffect(() => {
-    setInterval(() => {
-      if (searchedAddresses.size > 0 || savedAddresses.size > 0) {
-        
-      }
-    }, [100]);
-  }, [])
+  useInterval(() => {
+    if (searchedAddresses.size > 0 || savedAddresses.size > 0) {
+      if (searchedAddresses.size + savedAddresses.size > 200) return;
+      if (isLoading || isPointerLoading) return;
+      const payload = [
+        ...Array.from(searchedAddresses.values()),
+        ...Array.from(savedAddresses.values())
+      ];
+      updateAddresses(payload, sendMessage);
+    }
+  }, 100);
 
   useEffect(() => {
     setComponentState("UPDATED");
@@ -96,7 +113,7 @@ export function ValueSearchComponent() {
   const onValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setStringValue(event.target.value);
     const numberValue = Number(event.target.value);
-    if (!isNaN(numberValue)) setValue(numberValue)
+    if (!isNaN(numberValue)) setValue(numberValue);
     else setValue(undefined);
   };
 
@@ -279,7 +296,11 @@ export function ValueSearchComponent() {
             First scan
           </SearchValueButton>
 
-          <ValueInput type="text" value={stringValue} onChange={onValueChange} />
+          <ValueInput
+            type="text"
+            value={stringValue}
+            onChange={onValueChange}
+          />
 
           <SearchValueButton onClick={onSearchNextValueClick}>
             Next scan
@@ -458,7 +479,7 @@ const AddressContainer = styled.div<{ selected: boolean }>`
       : ""};
   padding-left: 5px;
 `;
-const SearchValueButton = styled.button<{disabled?: boolean}>`
+const SearchValueButton = styled.button<{ disabled?: boolean }>`
   background: ${Color.fifthBackground};
   border: 2px solid transparent;
   box-sizing: border-box;
@@ -469,7 +490,7 @@ const SearchValueButton = styled.button<{disabled?: boolean}>`
   padding: 5px;
   padding-left: 10px;
   padding-right: 10px;
-  cursor: ${props => props.disabled ? 'not-allowed': 'pointer'};
+  cursor: ${props => (props.disabled ? "not-allowed" : "pointer")};
   :last-of-type {
     border-top-left-radius: 0px;
     border-bottom-left-radius: 0px;

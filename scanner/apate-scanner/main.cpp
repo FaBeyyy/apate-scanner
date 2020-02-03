@@ -7,13 +7,15 @@
 #include "json.hpp"
 #include "Enum.hpp"
 #include "PointerScannerHelperFunctions.hpp"
+#include <variant>
+#include <any>
 
 using json = nlohmann::json;
 using namespace PointerScannerHelperFunctions;
 
 template <class T>
 void to_json(json& j, const MemoryEntry<T>& e) {
-	j = json{ {"address", e.address}, {"sizeInBytes", e.sizeInBytes}, {"value", e.value} };
+	j = json{ {"address", e.address}, {"dataType", magic_enum::enum_name(e.dataType)}, {"value", e.value} };
 }
 template <class T>
 void to_json(json& j, const PointerEntry<T>& e) {
@@ -37,11 +39,44 @@ void TestWriteFilet(int a)
 	}
 }
 
-template <typename Enumeration>
-auto as_integer(Enumeration const value)
--> typename std::underlying_type<Enumeration>::type
-{
-	return static_cast<typename std::underlying_type<Enumeration>::type>(value);
+
+void to_json(json& j, const MemoryEntry<std::any>& e) {
+	auto dataType = e.dataType;
+	if (dataType == DataType::INT_TYPE) {
+		auto value = std::any_cast<int>(e.value);
+		j = json{ {"address", e.address}, {"dataType", magic_enum::enum_name(e.dataType)}, {"value", value} };
+	}
+	if (dataType == DataType::FLOAT_TYPE) {
+		auto value = std::any_cast<float>(e.value);
+		j = json{ {"address", e.address}, {"dataType", magic_enum::enum_name(e.dataType)}, {"value", value} };
+	}
+	if (dataType == DataType::BOOL_TYPE) {
+		auto value = std::any_cast<bool>(e.value);
+		j = json{ {"address", e.address}, {"dataType", magic_enum::enum_name(e.dataType)}, {"value", value} };
+	}
+	
+}
+
+void from_json(const json& j, MemoryEntry<std::any>& p) {
+	auto dataType = j.at("dataType").get<std::string>();
+	
+	auto dataTypeEnumContainer = magic_enum::enum_cast<DataType>(dataType);
+
+	auto dataTypeEnumNumber = dataTypeEnumContainer.value();
+
+	p.dataType = dataTypeEnumNumber;
+	j.at("address").get_to(p.address);
+
+	if (dataTypeEnumNumber == DataType::INT_TYPE) {
+		p.value =  j.at("value").get<int>();
+	}
+	if (dataTypeEnumNumber == DataType::FLOAT_TYPE) {
+		p.value = j.at("value").get<float>();
+	}
+	if (dataTypeEnumNumber == DataType::BOOL_TYPE) {
+		p.value  = j.at("value").get<bool>();
+	}
+	
 }
 
 template <class T>
@@ -71,7 +106,7 @@ void TestWriteFile(std::string a)
 
 
 void main() {
-	try {
+	//try {
 		TestWriteFile("0");
 		std::string processName = "iw4mp.exe";
 		auto memory = std::make_shared<EasyMem>();
@@ -90,23 +125,27 @@ void main() {
 		auto pointerscannerInt = std::make_shared<Pointerscanner<int>>(memory, pipe, module, DataType::INT_TYPE);
 		auto pointerscannerFloat = std::make_shared<Pointerscanner<float>>(memory, pipe, module, DataType::FLOAT_TYPE);
 		auto pointerscannerBool = std::make_shared<Pointerscanner<bool>>(memory, pipe, module, DataType::BOOL_TYPE);
+	//}
+	//catch (std::exception &e) {
+	//		TestWriteFile("exc" + std::to_string(GetLastError()) + std::string(e.what()));
+	//	}
 		while (true)
 		{
-		
+			try {
 				DWORD exitCode;
 				GetExitCodeProcess(memory->getProcessHandle(), &exitCode);
 				if (exitCode == STILL_ACTIVE) {
-					
+
 					auto pipeDataBuffer = pipe->readPipe();
-				
-				
+
+
 					auto pipeData = json::parse(pipeDataBuffer);
 					if (pipeDataBuffer != "") {
-					
+
 						auto type = pipeData["type"];
-						
+
 						auto payload = json(pipeData["payload"]);
-						
+
 						auto returnData = json();
 						returnData["type"] = pipeData["type"];
 
@@ -115,8 +154,6 @@ void main() {
 							auto searchPayloadString = payload;
 							std::string dataTypeString = payload["dataType"];
 							if (dataTypeString == magic_enum::enum_name(DataType::INT_TYPE)) {
-								ValueSearchPayloadTyped<int> searchPayloadTyped = payload;
-							
 								returnData["payload"] = getAddressesFromScanType<int>(type, pointerscannerInt, payload);
 							}
 							else if (dataTypeString == magic_enum::enum_name(DataType::FLOAT_TYPE)) {
@@ -125,6 +162,28 @@ void main() {
 							else if (dataTypeString == magic_enum::enum_name(DataType::BOOL_TYPE)) {
 								returnData["payload"] = getAddressesFromScanType<bool>(type, pointerscannerBool, payload);
 							}
+						}
+
+						if (type == "UPDATE_ADDRESSES") {
+							std::vector<MemoryEntry<std::any>> entries = payload;
+							std::vector<MemoryEntry<std::any>> returnEntries;
+							for (auto entry : entries) {
+								if (entry.dataType == DataType::INT_TYPE) {
+									auto updatedEntry = pointerscannerInt->updateAddress(entry);
+									returnEntries.push_back(updatedEntry);
+								}
+								else if (entry.dataType == DataType::FLOAT_TYPE) {
+									auto updatedEntry = pointerscannerFloat->updateAddress(entry);
+									returnEntries.push_back(updatedEntry);
+								}
+								else if (entry.dataType == DataType::BOOL_TYPE) {
+									auto updatedEntry = pointerscannerBool->updateAddress(entry);
+									returnEntries.push_back(updatedEntry);
+								}
+							}
+							if (returnEntries.size() < 1) returnData["payload"] = "[]";
+						
+							returnData["payload"] = returnEntries;
 						}
 
 						if (type == "SEARCH_POINTERS") {
@@ -140,15 +199,9 @@ void main() {
 						}
 
 						pipe->writePipe(returnData.dump());
-						
+
 					}
 					else {
-						//update existing addresses
-					/*	auto returnData = json();
-						returnData["type"] = pipeData["type"];
-						auto addresses = pointerscanner->updateCurrentEntries();
-						returnData["payload"] = addresses;
-						pipe->writePipe(returnData.dump());*/
 
 					}
 				}
@@ -157,11 +210,13 @@ void main() {
 					break;
 				}
 				Sleep(10);
-		}
+			}
+			catch (std::exception &e) {
+						TestWriteFile("exc" + std::to_string(GetLastError()) + std::string(e.what()));
+					}
+		
 	}
-	catch (std::exception &e) {
-		TestWriteFile("exc" + std::to_string(GetLastError()) + std::string(e.what()));
-	}
+	
 	TerminateThread(GetCurrentThread(), 1458);
 }
 

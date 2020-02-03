@@ -12,15 +12,22 @@
 #include <memory>
 #include <fstream>
 #include <sstream>
+#include <any>
 
 
 using json = nlohmann::json;
 typedef DWORD ptr_size;  //OR DWORD IF 32-Bit
 
+enum DataType {
+	INT_TYPE,
+	FLOAT_TYPE,
+	BOOL_TYPE
+};
+
 template <class T>
 struct MemoryEntry {
 	uintptr_t address;
-	int sizeInBytes;
+	DataType dataType;
 	T value;
 };
 
@@ -39,11 +46,6 @@ struct ValueSearchPayloadString {
 	std::string compareType;
 };
 
-enum DataType {
-	INT_TYPE,
-	FLOAT_TYPE,
-	BOOL_TYPE
-};
 
 enum CompareType {
 	EQUALS,
@@ -71,6 +73,7 @@ public:
 	std::vector<MemoryEntry<T>> searchInitialValue(ValueSearchPayloadTyped<T> payload);
 	std::vector<MemoryEntry<T>> searchNextValue(ValueSearchPayloadTyped<T> payload);
 	std::vector<MemoryEntry<T>> updateCurrentEntries();
+	MemoryEntry<std::any> updateAddress(MemoryEntry<std::any> entry);
 	std::vector<PointerEntry<T>> updatePointers(std::vector <PointerEntry<T>> entries);
 	std::vector<PointerEntry<T>> searchStaticPointers(uintptr_t address);
 	Pointerscanner(std::shared_ptr<EasyMem> memory, std::shared_ptr<PipeClient> pipeClient, std::shared_ptr<Module> module, DataType dataType);
@@ -190,7 +193,7 @@ auto scanMemory(HANDLE handle, ValueSearchPayloadTyped<T> payload) {
 				{
 					auto pointer = (T*)(dump + x);
 					if (compareValues<T>(*pointer, payload.value, payload.compareType, payload.dataType)) {
-						foundEntries.push_back({ addr_min + x , 4, *pointer });
+						foundEntries.push_back({ addr_min + x , payload.dataType, *pointer });
 					}
 				}
 
@@ -314,10 +317,10 @@ std::vector<MemoryEntry<T>> Pointerscanner<T>::searchNextValue(ValueSearchPayloa
 	for (auto entry : this->currentEntries) {
 		const auto foundValue = memory->read<T>(entry.address);
 		if (compareTypeString == magic_enum::enum_name(CompareType::INCREASED) || compareTypeString == magic_enum::enum_name(CompareType::DECREASED)) {
-			if (compareValues<T>(foundValue, entry.value , payload.compareType, payload.dataType)) foundEntries.push_back({ entry.address, 4, foundValue });
+			if (compareValues<T>(foundValue, entry.value , payload.compareType, payload.dataType)) foundEntries.push_back({ entry.address, this->currentDataType, foundValue });
 		}
 		else {
-			if (compareValues<T>(foundValue, nextValue, payload.compareType, payload.dataType)) foundEntries.push_back({ entry.address, 4, foundValue });
+			if (compareValues<T>(foundValue, nextValue, payload.compareType, payload.dataType)) foundEntries.push_back({ entry.address, this->currentDataType, foundValue });
 		}
 		
 	}
@@ -331,9 +334,18 @@ std::vector<MemoryEntry<T>> Pointerscanner<T>::updateCurrentEntries()
 	std::vector<MemoryEntry<T>> updatedEntries = {};
 	for (auto entry : this->currentEntries) {
 		auto value = this->memory->read<T>(entry.address);
-		updatedEntries.push_back({ entry.address, 4, value });
+		updatedEntries.push_back({ entry.address, this->currentDataType, value });
 	}
 	return updatedEntries;
+}
+
+//TODO: FIX USING STD::ANY FOR NOW
+template <typename T>
+MemoryEntry<std::any> Pointerscanner<T>::updateAddress(MemoryEntry<std::any> entry)
+{
+	auto value = this->memory->read<T>(entry.address);
+	MemoryEntry<std::any> returnEntry =  { entry.address, this->currentDataType, value };
+	return returnEntry;
 }
 
 template <typename T>
