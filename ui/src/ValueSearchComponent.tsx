@@ -221,7 +221,7 @@ export function ValueSearchComponent() {
     [renderRow]
   );
 
-  const onAddToSavedListClick = () => {
+  const onAddToSavedListClick = useMemo(() => () => {
     const entry = selectedAddress;
     if (!entry) return;
     const newSearchedAddresses = new Map(searchedAddresses);
@@ -230,7 +230,7 @@ export function ValueSearchComponent() {
     const newSavedAddresses = new Map(savedAddresses);
     newSavedAddresses.set(entry.address, entry);
     setSavedAddresses(newSavedAddresses);
-  };
+  }, [setSavedAddresses, setSearchedAddresses, selectedAddress]);
 
   const onPointerScanClick = () => {
     if (!selectedAddress) return;
